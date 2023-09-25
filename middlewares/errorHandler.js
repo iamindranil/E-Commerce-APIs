@@ -13,5 +13,6 @@ exports.errorHandler=(err,req,res,next)=>{
     res.status(statuscode);
     res.json({
         message:err?.message,
+        stack:err
     })
 }

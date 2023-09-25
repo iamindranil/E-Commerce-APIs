@@ -1,6 +1,8 @@
 const { generateToken } = require("../config/jwtToken");
 const User=require("../models/userModels");
 const asyncHandler=require('express-async-handler');
+const { validateMongoDbId } = require("../utils/validateMongodbid");
+const { generateRefreshToken } = require("../config/refreshToken");
 
 //register
 exports.createUser= asyncHandler(async (req,res)=>{
@@ -20,6 +22,20 @@ exports.loginuserCtrl=asyncHandler(async(req,res)=>{
     //check user exists or not
     const findUser=await User.findOne({email});
     if(findUser && await findUser.isPasswordMatched(password)){
+        const refreshToken=await generateRefreshToken(findUser?.id);
+        const updateUser=await User.findByIdAndUpdate(
+            findUser.id,
+            {
+                refreshToken:refreshToken
+            },
+            {
+                new:true
+            }
+        )
+        res.cookie('refreshToken',refreshToken,{
+            httpOnly:true,
+            maxAge:72*60*60*1000
+        })
         res.json({
             _id:findUser?.firstname,
             lastname:findUser?.lastname,
@@ -45,12 +61,92 @@ exports.getAllUser=asyncHandler(async(req,res)=>{
 //getSingleUser
 exports.getUser=asyncHandler(async(req,res)=>{
     const{id}=req.params;
-    try{
+    validateMongoDbId(id);
+    try{ 
         const user= await User.findById(id)
+        // console.log(user);
+        res.json(user)
+    }catch(error){
+        throw new Error(error)
+    }
+})
+//update user
+exports.updateUser=asyncHandler(async(req,res)=>{
+    const{id}=req.user;
+    validateMongoDbId(id);
+    try{
+        const updatedUser=await User.findByIdAndUpdate(
+            id,
+            {
+                firstname:req?.body?.firstname,
+                lastname: req?.body.lastname,
+                email:req?.body?.email,
+                mobile:req?.body?.email
+            },
+            {
+                new:true
+            }
+        )
+        res.json(updatedUser);
+    }catch(error){
+        throw new Error(error)
+
+    }
+})
+//deleteUser
+exports.deleteUser=asyncHandler(async(req,res)=>{
+    const{id}=req.params;
+    validateMongoDbId(id);
+    try{
+        const user= await User.findByIdAndDelete(id)
         console.log(user);
         res.json(user)
     }catch(error){
         throw new Error(error)
     }
 })
+
+//blockUser
+exports.blockUser=asyncHandler(async(req,res)=>{
+    const{id}=req.params;
+    validateMongoDbId(id);
+    console.log(93);
+    try{
+        const block=await User.findByIdAndUpdate(id,
+            {
+                isBlocked:true
+            },
+            {
+                new:true
+            }
+        )
+        res.json({
+            messsage:"User Blocked"
+        })
+    }catch(error){
+        throw new Error(error)
+    }
+})
+//unblockUser
+exports.unblockUser=asyncHandler(async(req,res)=>{
+    const{id}=req.params;
+    validateMongoDbId(id);
+    console.log(123)
+    try{
+        const unblock=await User.findByIdAndUpdate(id,
+            {
+                isBlocked:false
+            },
+            {
+                new:true
+            }
+        )
+        res.json({
+            messsage:"User Unblocked"
+        })
+    }catch(error){
+        throw new Error(error)
+    }
+})
+
 
