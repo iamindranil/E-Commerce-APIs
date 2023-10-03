@@ -3,6 +3,9 @@ const User=require("../models/userModels");
 const asyncHandler=require('express-async-handler');
 const { validateMongoDbId } = require("../utils/validateMongodbid");
 const { generateRefreshToken } = require("../config/refreshToken");
+const jwt=require('jsonwebtoken');
+
+
 
 //register
 exports.createUser= asyncHandler(async (req,res)=>{
@@ -33,7 +36,7 @@ exports.loginuserCtrl=asyncHandler(async(req,res)=>{
             }
         )
         res.cookie('refreshToken',refreshToken,{
-            httpOnly:true,
+            httpOnly:true, 
             maxAge:72*60*60*1000
         })
         res.json({
@@ -147,6 +150,44 @@ exports.unblockUser=asyncHandler(async(req,res)=>{
     }catch(error){
         throw new Error(error)
     }
+})
+//handle refresh token
+exports.handleRefreshToken=asyncHandler(async(req,res)=>{
+    const cookie=req.cookies;
+    if(!cookie?.refreshToken)throw new Error("No Refresh Token Present")
+    refreshToken=cookie.refreshToken;
+    const user=await User.findOne({refreshToken});
+    if(!user)throw new Error('User not found or no refresh token present!')
+    jwt.verify(refreshToken,process.env.JWT_SECRET,(err,decoded)=>{
+        if(err||user.id!=decoded.id){
+            throw new Error('There is something wrong with refresh token')
+        }
+        const accessToken=generateToken(user?._id);
+        res.json({accessToken});
+    });
+    res.json(user)
+})
+//logout
+exports.logout=asyncHandler(async(req,res)=>{
+    const cookie=req.cookies;
+    if(!cookie?.refreshToken)throw new Error("No Refresh Token Present")
+    refreshToken=cookie.refreshToken;
+    const user=await User.findOne({refreshToken});
+    if(!user){
+        res.clearCookie("refreshToken",{
+            httpOnly:true,
+            secure:true
+        });
+        return res.sendStatus(204)//forbidden
+    }
+    await User.findOneAndUpdate({refreshToken},{
+        refreshToken:"",
+    })
+    res.clearCookie("refreshToken",{
+        httpOnly:true,
+        secure:true
+    }); 
+    res.sendStatus(204)//forbidden 
 })
 
 

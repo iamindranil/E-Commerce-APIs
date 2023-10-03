@@ -28,6 +28,7 @@ exports.isAdmin=asyncHandler(async(req,res,next)=>{
     // console.log(req.user);
     const {email}=req.user;
     const adminUser=await User.findOne({email});
+    console.log(adminUser)
     if(adminUser.role!=="Admin"){
         throw new Error("You are not admin");
     }else{
