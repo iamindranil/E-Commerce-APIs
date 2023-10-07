@@ -4,6 +4,7 @@ const asyncHandler=require('express-async-handler');
 const { validateMongoDbId } = require("../utils/validateMongodbid");
 const { generateRefreshToken } = require("../config/refreshToken");
 const jwt=require('jsonwebtoken');
+const crypto=require('crypto');
 
 
 
@@ -189,5 +190,63 @@ exports.logout=asyncHandler(async(req,res)=>{
     }); 
     res.sendStatus(204)//forbidden 
 })
+//updatePassword
+exports.updatePassword=asyncHandler(async(req,res)=>{
+    console.log(req.user)
+    const{_id}=req.user;
+    const {password}=req.body;
+    validateMongoDbId(_id);
+    const user=await User.findById(_id);
+    if(password){
+        user.password=password; 
+        const updatedPassword=await user.save();
+        res.status(200).json({
+            success:true,
+            updatedPassword
+        })
+    }else{
+        res.json(user);
+    }
+})
+//forgotPasssword
+exports.forgotPasswordToken=asyncHandler(async(req,res)=>{
+    const{email}=req.body;
+    const user=await User.findOne({email});
+    if(!user){
+        throw new Error("User not found with this email")
+    }
+    try{
+        const token=await user.createPasswordResetToken();
+        await user.save();
+        const resetURL="http://localhost:5000"
+        const data={
+            to:email,
+            text:"hey User",
+            subject:"Forgot Password Link",
+            html:resetURL
+        };
+        sendEmail(data);
+        res.json(token)
+    }catch(error){
+        throw new Error(error);
+    }
+})
+//resetPassword
+exports.resetPassword=asyncHandler(async(req,res)=>{
+    const {password}=req.body;
+    const{token}=req.params;
+    const hashedToken=crypto.createHash('sha256').update(token).digest("hex");
+    const user=await User.findOne({
+        passwordResetToken:hashedToken,
+        passwordResetExpires:{$gt:Date.now()},
 
-
+    })
+    if(!user){
+        throw new Error("Token Expired..Please try again later")
+        user.password=password;
+        user.passwordResetToken=undefined;
+        user.passwordResetExpires=undefined;
+        await user.save();
+        res.json(user)
+    }
+})

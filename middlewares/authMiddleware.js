@@ -13,7 +13,7 @@ exports.authMiddleware=asyncHandler(async(req,res,next)=>{
                 const decode=jwt.verify(token,process.env.JWT_SECRET)
                 // console.log(decode);
                 const user=await User.findById(decode?.id);
-                req.user=user;
+                req.user=user;//***** */
                 next();
             }
         }catch(error){

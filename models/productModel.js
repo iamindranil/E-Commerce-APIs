@@ -29,11 +29,13 @@ var productSchema = new mongoose.Schema({
     },
     quantity:{
         type:Number,
-        require:true
+        require:true,
+        // select:false
     },
     sold:{
         type:Number,
-        default:0
+        default:0,
+        // select:false
     },
     images:{
         type:Array,
