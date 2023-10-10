@@ -14,7 +14,9 @@ exports.authMiddleware=asyncHandler(async(req,res,next)=>{
                 // console.log(decode);
                 const user=await User.findById(decode?.id);
                 req.user=user;//***** */
+                // console.log(user); 
                 next();
+                console.log(decode)
             }
         }catch(error){
             throw new Error('Not Authorized! token expired. Please Login again')
@@ -25,10 +27,10 @@ exports.authMiddleware=asyncHandler(async(req,res,next)=>{
 })
 
 exports.isAdmin=asyncHandler(async(req,res,next)=>{ 
-    // console.log(req.user);
+    console.log("Admin nowwwwwwwwwwww------------->>");
     const {email}=req.user;
     const adminUser=await User.findOne({email});
-    console.log(adminUser)
+    // console.log(adminUser)
     if(adminUser.role!=="Admin"){
         throw new Error("You are not admin");
     }else{
