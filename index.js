@@ -4,6 +4,7 @@ const app=express();
 const dotenv=require('dotenv').config();
 const authRouter=require('./routes/authRoute');
 const productRouter=require('./routes/productRoute');
+const categoryRouter=require('./routes/categoryRoute');
 const blogRouter=require('./routes/blogRoute')
 const bodyParser = require('body-parser');
 const { notFound, errorHandler } = require('./middlewares/errorHandler');
@@ -24,6 +25,7 @@ app.use(cookieParser());
 app.use("/api/user",authRouter);
 app.use("/api/product",productRouter);
 app.use("/api/blog",blogRouter) 
+app.use("/api/category",categoryRouter) 
 app.use(notFound);
 app.use(errorHandler);
 app.listen(PORT,()=>{
