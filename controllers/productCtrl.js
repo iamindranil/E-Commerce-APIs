@@ -1,6 +1,9 @@
 const Product=require("../models/productModel");
 const asyncHandler=require("express-async-handler");
 const slugify=require('slugify');
+const User=require("../models/userModels");
+
+
 
 //create product
 exports.createProduct=asyncHandler(async(req,res)=>{
@@ -114,4 +117,69 @@ exports.deleteProduct=asyncHandler(async(req,res)=>{
     }catch(error){
         throw new Error(error)
     } 
+})
+
+
+
+exports.addToWishList=asyncHandler(async(req,res)=>{
+    const {_id}=req.user;
+    const {prodId}=req.body;
+    try{
+        const user=await User.findById(_id);
+        const alreadyAdded=user.wishlist.find((id)=>id.toString()===prodId);
+        if(alreadyAdded){
+            let user=await User.findByIdAndUpdate(
+                id,
+                {
+                    $pull:{wishlist:prodId}
+                },
+                {new:true}
+            )
+        }else{
+            let user=await User.findByIdAndUpdate(
+                id,
+                {
+                    $push:{wishlist:prodId}
+                },
+                {new:true}
+            )
+        }
+    }catch(error){
+        throw new  Error(error)
+    }
+})
+
+exports.rating=asyncHandler(async(req,res)=>{
+    const{_id}=req.user;
+    const{star,prodId}=req.body;
+    try{
+        const product=await Product.findById(prodId);
+        let alreadyRated=product.ratings.find(
+            (userId)=>userId.postedby.toString()===_id.toString()
+        )
+        if(alreadyRated){
+            const updateRating=await Product.findOne(
+                {
+                    ratings:{$elemMatch:alreadyRated}
+                },
+                {
+                    $set:{"ratings.$.star":star}
+                },
+                {new:true}
+            )
+            res.json(updateRating)
+        }else{
+            const rateProduct=await Product.findByIdAndUpdate(prodId,{
+                $push:{
+                    ratings:{
+                        star:star,
+                        postedby:_id,
+                    }
+                }
+            },{new:true})
+            res.json(rateProduct)
+        }
+    }catch(error){
+        throw new Error(error);
+    }
 })
