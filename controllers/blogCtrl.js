@@ -2,6 +2,10 @@ const Blog=require("../models/blogModel");
 const User=require("../models/userModels");
 const asyncHandler=require("express-async-handler");
 const {validateMongoDbId}=require("../utils/validateMongodbid");
+const cloudinaryUploading=require("../utils/cloudinary");
+const fs=require('fs');
+
+
 
 exports.createBlog=asyncHandler(async(req,res)=>{
     try{
@@ -169,6 +173,37 @@ exports.dislikeBlog=asyncHandler(async(req,res)=>{
         res.json(blog)   
     }
 })
+
+
+exports.uploadImages=asyncHandler(async(req,res)=>{
+    const {id}=req.params;
+    validateMongoDbId(id);
+    try{
+        const uploader=(path)=>cloudinaryUploading(path,"images");
+        const urls=[];
+        const files=req.files;
+        for(const file of files){
+            const{path}=file;
+            const newPath=await uploader(path);
+            urls.push(newPath);
+            fs.unlinkSync(path);
+        }
+        const findBlog=await Product.findByIdAndUpdate(
+            id,
+            {
+                images:urls.map((file)=>{
+                    return file;
+                })
+            },
+            {new:true}
+        );
+        res.json(findBlog)
+    }catch(error){
+        throw new Error(error);
+    }
+})
+
+
 
 
 

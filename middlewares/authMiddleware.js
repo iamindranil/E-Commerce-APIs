@@ -27,7 +27,7 @@ exports.authMiddleware=asyncHandler(async(req,res,next)=>{
 })
 
 exports.isAdmin=asyncHandler(async(req,res,next)=>{ 
-    console.log("Admin nowwwwwwwwwwww------------->>");
+    // console.log("Admin n------------->>");
     const {email}=req.user;
     const adminUser=await User.findOne({email});
     // console.log(adminUser)
