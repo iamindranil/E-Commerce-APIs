@@ -2,7 +2,7 @@ const Blog=require("../models/blogModel");
 const User=require("../models/userModels");
 const asyncHandler=require("express-async-handler");
 const {validateMongoDbId}=require("../utils/validateMongodbid");
-const cloudinaryUploading=require("../utils/cloudinary");
+const cloudinaryUploading=require("../utils/cloudinary"); 
 const fs=require('fs');
 
 
